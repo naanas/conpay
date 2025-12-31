@@ -2,13 +2,16 @@
 import { ref } from 'vue';
 import { 
   DollarSign, Shield, Clock, RotateCw, 
-  Eye, EyeOff, Globe, Hash, Key 
+  Eye, EyeOff, Globe, Hash, Key, Pencil // [BARU] Import Icon Pencil
 } from 'lucide-vue-next';
 import type { Partner } from '../types';
 
 const props = defineProps<{
   partner: Partner;
 }>();
+
+// [BARU] Define Emits untuk fitur Edit
+const emit = defineEmits(['edit']);
 
 // State lokal untuk menyimpan status show/hide credential per field
 const visibleCredentials = ref<Record<string, boolean>>({});
@@ -21,10 +24,10 @@ const toggleVisibility = (key: string) => {
 const formatIDR = (val: number) => 
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 
-// Helper: Ubah camelCase jadi Title Case (misal: merchantCode -> Merchant Code)
+// Helper: Ubah camelCase jadi Title Case
 const formatKey = (key: string) => key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
 
-// Helper: Deteksi field sensitif (Key, Secret, Password)
+// Helper: Deteksi field sensitif
 const isSensitive = (key: string) => /key|secret|password|token/i.test(key);
 </script>
 
@@ -44,9 +47,19 @@ const isSensitive = (key: string) => /key|secret|password|token/i.test(key);
             </span>
           </div>
         </div>
-        <span :class="partner.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-rose-100 text-rose-700 border-rose-200'" class="px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wide">
-          {{ partner.status }}
-        </span>
+
+        <div class="flex items-center gap-2">
+          <span :class="partner.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-rose-100 text-rose-700 border-rose-200'" class="px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wide">
+            {{ partner.status }}
+          </span>
+
+          <button 
+            @click.stop="emit('edit', partner)"
+            class="p-1.5 text-slate-400 bg-white border border-slate-200 rounded-lg opacity-0 group-hover:opacity-100 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all shadow-sm"
+            title="Edit Configuration">
+            <Pencil class="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </div>
 

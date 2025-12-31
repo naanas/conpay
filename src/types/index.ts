@@ -92,3 +92,22 @@ export interface Transaction {
     code: string 
   };
 }
+
+export interface Partner {
+  id: string;
+  name: string;
+  code: string;
+  type: 'PAYMENT_GATEWAY' | 'EWALLET' | 'BANK_VA' | string; 
+  status: 'ACTIVE' | 'INACTIVE';
+  
+  credentials: Record<string, any>; 
+  
+  // [BARU] Tambahkan field ini
+  mapping_schema?: Record<string, any>; 
+
+  webhook_url: string | null;
+  config: PartnerConfig;
+  fee_structure: PartnerFee;
+  created_at: string;
+  updated_at: string;
+}

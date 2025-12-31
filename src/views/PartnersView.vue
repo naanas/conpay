@@ -3,19 +3,23 @@ import { onMounted, ref, computed } from 'vue';
 import api from '../api/axios';
 import type { Partner, ApiResponse } from '../types';
 import PartnerCard from '../components/PartnerCard.vue';
+import AddPartnerModal from '../components/AddPartnerModal.vue';
 import { 
   Activity, Server, Smartphone, Building2 
 } from 'lucide-vue-next';
 
 const partners = ref<Partner[]>([]);
 const loading = ref(true);
+const showModal = ref(false); // [MODIFIKASI] Ubah nama agar lebih umum (bukan showAddModal)
+const selectedPartner = ref<Partner | null>(null); // [BARU] State untuk menyimpan partner yang diedit
 
 // Logic Pengelompokan (Grouping)
 const gateways = computed(() => partners.value.filter(p => p.type === 'PAYMENT_GATEWAY'));
 const banks = computed(() => partners.value.filter(p => p.type === 'BANK_VA'));
 const ewallets = computed(() => partners.value.filter(p => p.type === 'EWALLET'));
 
-onMounted(async () => {
+const fetchPartners = async () => {
+  loading.value = true;
   try {
     const { data } = await api.get<ApiResponse<Partner[]>>('/admin/partners');
     if (data.success) {
@@ -26,17 +30,48 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// [BARU] Logic Buka Modal Create
+const openCreateModal = () => {
+  selectedPartner.value = null; // Reset agar mode Create
+  showModal.value = true;
+};
+
+// [BARU] Logic Buka Modal Edit (Dipanggil dari PartnerCard)
+const openEditModal = (partner: Partner) => {
+  selectedPartner.value = partner; // Set data agar mode Edit
+  showModal.value = true;
+};
+
+const handleSuccess = () => {
+  fetchPartners(); // Refresh list data
+};
+
+onMounted(() => {
+  fetchPartners();
 });
 </script>
 
 <template>
-  <div class="pb-12 space-y-8">
+  <div class="relative pb-12 space-y-8">
+    
+    <AddPartnerModal 
+      :is-open="showModal" 
+      :partner-to-edit="selectedPartner"
+      @close="showModal = false"
+      @success="handleSuccess"
+    />
+
     <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-slate-800">Payment Partners</h1>
         <p class="mt-1 text-sm text-slate-500">Manage integration credentials, fees, and configurations.</p>
       </div>
-      <button class="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
+      
+      <button 
+        @click="openCreateModal"
+        class="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
         <Activity class="w-4 h-4" /> Add New Partner
       </button>
     </div>
@@ -57,7 +92,7 @@ onMounted(async () => {
           <span class="text-xs font-medium bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full ml-auto">{{ gateways.length }} Connected</span>
         </div>
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          <PartnerCard v-for="p in gateways" :key="p.id" :partner="p" />
+          <PartnerCard v-for="p in gateways" :key="p.id" :partner="p" @edit="openEditModal" />
         </div>
       </section>
 
@@ -70,7 +105,7 @@ onMounted(async () => {
           <span class="text-xs font-medium bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full ml-auto">{{ banks.length }} Connected</span>
         </div>
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          <PartnerCard v-for="p in banks" :key="p.id" :partner="p" />
+          <PartnerCard v-for="p in banks" :key="p.id" :partner="p" @edit="openEditModal" />
         </div>
       </section>
 
@@ -83,7 +118,7 @@ onMounted(async () => {
           <span class="text-xs font-medium bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full ml-auto">{{ ewallets.length }} Connected</span>
         </div>
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          <PartnerCard v-for="p in ewallets" :key="p.id" :partner="p" />
+          <PartnerCard v-for="p in ewallets" :key="p.id" :partner="p" @edit="openEditModal" />
         </div>
       </section>
 
